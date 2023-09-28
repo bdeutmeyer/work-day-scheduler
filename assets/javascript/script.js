@@ -1,10 +1,4 @@
 $(function () {
-  // TODO: Add a listener for click events on the save button. This code should
-  // use the id in the containing time-block as a key to save the user input in
-  // local storage. HINT: What does `this` reference in the click listener
-  // function? How can DOM traversal be used to get the "hour-x" id of the
-  // time-block containing the button that was clicked? How might the id be
-  // useful when saving the description in local storage?
   var currentDate = $('#currentDay');
   var currentHour = dayjs().format('HH');
   var today = dayjs().format('MMM D, YYYY');
@@ -19,6 +13,7 @@ $(function () {
   var hour16 = $("#hour-16");
   var hour17 = $("#hour-17");
   var hourArray = [hour9, hour10, hour11, hour12, hour13, hour14, hour15, hour16, hour17];
+  var textBoxContent = JSON.parse(localStorage.getItem("text-content")) || [];
 
 function timerStart() {
   var startDay = dayjs().format('MMM D, YYYY');
@@ -30,35 +25,63 @@ function timerStart() {
 
 function colorCode() {
   for (i = 0; i < hourArray.length; i++) {
-    if ([i] < currentHour - 9) {
-      hourArray[i].removeClass("future", "present");
+    if (i < currentHour - 9) {
+      hourArray[i].removeClass("future present");
       hourArray[i].addClass("past");
-    } else if ([i] == currentHour - 9) {
-      hourArray[i].removeClass("future", "past");
+    } else if (i == currentHour - 9) {
+      hourArray[i].removeClass("future past");
       hourArray[i].addClass("present");
     } else {
-      hourArray[i].removeClass("past", "present");
+      hourArray[i].removeClass("past present");
       hourArray[i].addClass("future");
     }
   }
 }
-
-saveBtn.on('click', function() {
-
-})
-
-timerStart();
-colorCode();
-  
-  // TODO: Add code to apply the past, present, or future class to each time
-  // block by comparing the id to the current hour. HINTS: How can the id
-  // attribute of each time-block be used to conditionally add or remove the
-  // past, present, and future classes? How can Day.js be used to get the
-  // current hour in 24-hour time?
-  //
   // TODO: Add code to get any user input that was saved in localStorage and set
   // the values of the corresponding textarea elements. HINT: How can the id
   // attribute of each time-block be used to do this?
   //
-  // TODO: Add code to display the current date in the header of the page.
+
+
+  function keepText() {
+    for (var i = 0; i < hourArray.length; i++) {
+      // Matches the hour property with the IDs in hourArray
+      var idName = hourArray[i].attr('id');
+      if (hourArray[i].children('.description').val() !== "") {
+        for (var j = 0; j < textBoxContent.length; j++) {
+          if (textBoxContent[j].hour === idName) {
+            hourArray[i].children('.description').val(textBoxContent[j].content);
+            break;
+          }
+        }
+      } else {
+        // Find the index of the object with the matching hour property
+        var indexToRemove = textBoxContent.findIndex(function(item) {
+          return item.hour === idName;
+        });
+        // If an object with matching hour property is found, removes it from the array
+        if (indexToRemove !== -1) {
+          textBoxContent.splice(indexToRemove, 1);
+          // Updates local storage with the modified textBoxContent array
+          localStorage.setItem("text-content", JSON.stringify(textBoxContent));
+        }
+      }
+    }
+  }
+  
+saveBtn.on('click', function(e) {
+  e.stopPropagation();
+  var idName = $(this).parent().attr('id');
+  var userInput = {
+    hour: idName,
+    content: $(this).siblings('.description').val(),
+  }
+  textBoxContent.push(userInput);
+  localStorage.setItem("text-content", JSON.stringify(textBoxContent));
+  keepText();
+});
+
+  timerStart();
+  colorCode();  
+  keepText();
 });
