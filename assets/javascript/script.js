@@ -1,3 +1,4 @@
+//Wraps everything so that it doesn't run until the HTML is done rendering
 $(function () {
   var currentDate = $('#currentDay');
   var currentHour = dayjs().format('HH');
@@ -15,34 +16,32 @@ $(function () {
   var hourArray = [hour9, hour10, hour11, hour12, hour13, hour14, hour15, hour16, hour17];
   var textBoxContent = JSON.parse(localStorage.getItem("text-content")) || [];
 
-function timerStart() {
-  var startDay = dayjs().format('MMM D, YYYY');
-  currentDate.text(startDay);
+//Puts current date at top of page
+  function timerStart() {
+    var startDay = dayjs().format('MMM D, YYYY');
+    currentDate.text(startDay);
     setInterval(function() {
         currentDate.text(today);
     }, 1000);
-}
+  }
 
-function colorCode() {
-  for (i = 0; i < hourArray.length; i++) {
-    if (i < currentHour - 9) {
-      hourArray[i].removeClass("future present");
-      hourArray[i].addClass("past");
-    } else if (i == currentHour - 9) {
-      hourArray[i].removeClass("future past");
-      hourArray[i].addClass("present");
-    } else {
-      hourArray[i].removeClass("past present");
-      hourArray[i].addClass("future");
+//Loops through hourArray, compares hour to current hour, color codes according to past, present, or future status
+  function colorCode() {
+    for (i = 0; i < hourArray.length; i++) {
+      if (i < currentHour - 9) {
+        hourArray[i].removeClass("future present");
+        hourArray[i].addClass("past");
+      } else if (i == currentHour - 9) {
+        hourArray[i].removeClass("future past");
+        hourArray[i].addClass("present");
+      } else {
+        hourArray[i].removeClass("past present");
+        hourArray[i].addClass("future");
+      }
     }
   }
-}
-  // TODO: Add code to get any user input that was saved in localStorage and set
-  // the values of the corresponding textarea elements. HINT: How can the id
-  // attribute of each time-block be used to do this?
-  //
 
-
+//Loops through hourArray, sets text content based on local storage
   function keepText() {
     for (var i = 0; i < hourArray.length; i++) {
       // Matches the hour property with the IDs in hourArray
@@ -54,32 +53,30 @@ function colorCode() {
             break;
           }
         }
-      } else {
-        // Find the index of the object with the matching hour property
-        var indexToRemove = textBoxContent.findIndex(function(item) {
-          return item.hour === idName;
-        });
-        // If an object with matching hour property is found, removes it from the array
-        if (indexToRemove !== -1) {
-          textBoxContent.splice(indexToRemove, 1);
-          // Updates local storage with the modified textBoxContent array
-          localStorage.setItem("text-content", JSON.stringify(textBoxContent));
-        }
       }
     }
   }
   
-saveBtn.on('click', function(e) {
-  e.stopPropagation();
-  var idName = $(this).parent().attr('id');
-  var userInput = {
-    hour: idName,
-    content: $(this).siblings('.description').val(),
-  }
-  textBoxContent.push(userInput);
-  localStorage.setItem("text-content", JSON.stringify(textBoxContent));
-  keepText();
-});
+//Event listener. On click, creates object of id and text content. If text field is empty, clears that object out of local storage and sets text content to empty string. Otherwise, adds object to overall array and saves to local storage
+  saveBtn.on('click', function() {
+    var idName = $(this).parent().attr('id');
+    var userInput = {
+      hour: idName,
+      content: $(this).siblings('.description').val(),
+    }
+
+    if ($(this).siblings('.description').val() === '') {
+      var index = textBoxContent.findIndex(function(object) {
+      return object.hour === idName;
+      });
+      textBoxContent.splice(index, 1);
+      localStorage.setItem("text-content", JSON.stringify(textBoxContent));
+    } else { 
+      textBoxContent.push(userInput);
+      localStorage.setItem("text-content", JSON.stringify(textBoxContent));
+      keepText();
+    }
+  });
 
   timerStart();
   colorCode();  
